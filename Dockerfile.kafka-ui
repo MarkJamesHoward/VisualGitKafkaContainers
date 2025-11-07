@@ -1,0 +1,20 @@
+# Use the official Kafka UI image as the base
+FROM provectuslabs/kafka-ui:latest
+
+# Set the maintainer label
+LABEL maintainer="your-email@example.com"
+LABEL description="Standalone Kafka UI container - connects to local and Azure Kafka"
+
+# Set environment variables for Kafka UI configuration
+# Local Kafka cluster
+ENV KAFKA_CLUSTERS_0_NAME=kafka-local
+ENV KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=host.docker.internal:9092
+ENV KAFKA_CLUSTERS_0_PROPERTIES_SECURITY_PROTOCOL=PLAINTEXT
+
+# Azure Kafka cluster
+ENV KAFKA_CLUSTERS_1_NAME=kafka-azure
+ENV KAFKA_CLUSTERS_1_BOOTSTRAPSERVERS=mykafka.evgxaxcrfefdgfcc.australiaeast.azurecontainer.io:9094
+ENV KAFKA_CLUSTERS_1_PROPERTIES_SECURITY_PROTOCOL=PLAINTEXT
+
+# Enable dynamic configuration
+ENV DYNAMIC_CONFIG_ENABLED=true

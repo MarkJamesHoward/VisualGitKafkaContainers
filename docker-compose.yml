@@ -1,0 +1,54 @@
+services:
+  kafka:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: custom-kafka:3.7.1
+    container_name: kafka
+    restart: unless-stopped
+    ports:
+      - "9092:9092"   # Client (PLAINTEXT)
+      - "9093:9093"   # Controller (KRaft)
+      - "9094:9094"   # Azure external access
+    environment:
+      # KRaft single-node (controller + broker in one process)
+      - KAFKA_NODE_ID=1
+      - KAFKA_PROCESS_ROLES=broker,controller
+      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      # Dual listeners: INTERNAL for containers, EXTERNAL for host
+      - KAFKA_LISTENERS=INTERNAL://:29092,EXTERNAL://:9092,AZURE://:9094,CONTROLLER://:9093
+      - KAFKA_ADVERTISED_LISTENERS=INTERNAL://kafka:29092,EXTERNAL://localhost:9092,AZURE://apachekafkav2.fwbjdhhphma8hyc3.australiaeast.azurecontainer.io:9094
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,AZURE:PLAINTEXT,CONTROLLER:PLAINTEXT
+      - KAFKA_INTER_BROKER_LISTENER_NAME=INTERNAL
+      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@localhost:9093
+      # Sensible single-node defaults
+      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+      - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
+      # Initialize storage (required for KRaft) - must be 22-char base64url string
+      - KAFKA_CLUSTER_ID=7rYpQ5x3S2Na0bCDeFghIw
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - kafka-net
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:29092
+    depends_on:
+      - kafka
+    networks:
+      - kafka-net
+
+volumes:
+  kafka_data:
+
+networks:
+  kafka-net:
